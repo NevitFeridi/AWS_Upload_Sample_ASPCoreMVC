@@ -35,13 +35,26 @@ namespace NF.Samples.AWS_S3.MVC_Core.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
-
+        public IActionResult UploadFile()
+        {
+            return View();
+        }
         #region Amazon
+        // you must set your accessKey and secretKey
+        // for getting your accesskey and secretKey go to your Aws amazon console
         string AWS_accessKey = "xxxxxxx";
         string AWS_secretKey = "xxxxxxxxxxxxxx";
         string AWS_bucketName = "my-uswest";
         string AWS_defaultFolder = "MyTest_Folder";
-        protected async Task<string> UploadFileToAWSAsync(IFormFile file, string subFolder = "")
+
+        [HttpPost]
+        public async Task<IActionResult> UploadNewFileAsync(IFormFile myfile, string subFolder)
+        {
+            ViewBag.result = await UploadFileToAWSAsync(myfile, subFolder);
+            return View();
+        }
+
+        protected async Task<string> UploadFileToAWSAsync(IFormFile myfile, string subFolder = "")
         {
             var result = "";
             try
@@ -51,15 +64,15 @@ namespace NF.Samples.AWS_S3.MVC_Core.Controllers
                 var keyName = AWS_defaultFolder;
                 if (!string.IsNullOrEmpty(subFolder))
                     keyName = keyName + "/" + subFolder.Trim();
-                keyName = keyName + "/" + file.FileName;
+                keyName = keyName + "/" + myfile.FileName;
 
-                var fs = file.OpenReadStream();
+                var fs = myfile.OpenReadStream();
                 var request = new Amazon.S3.Model.PutObjectRequest
                 {
                     BucketName = bucketName,
                     Key = keyName,
                     InputStream = fs,
-                    ContentType = file.ContentType,
+                    ContentType = myfile.ContentType,
                     CannedACL = S3CannedACL.PublicRead
                 };
                 await s3Client.PutObjectAsync(request);
